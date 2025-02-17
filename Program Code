@@ -1,0 +1,280 @@
+# Import required modules
+import numpy as np
+import subprocess
+import os
+import time
+from scipy.optimize import minimize
+from sklearn.gaussian_process import GaussianProcessRegressor
+from sklearn.gaussian_process.kernels import Matern
+from scipy.optimize import differential_evolution
+
+# Function to modify batch files dynamically
+def modify_batch_file(batch_file, params):
+    with open(batch_file, "r") as file:
+        lines = file.readlines()
+    for i, param in enumerate(params, start=1):
+        lines[i] = f'SET "arg{i}={param}"\n'
+    with open(batch_file, "w") as file:
+        file.writelines(lines)
+
+# Function to execute batch files and parse output
+def execute_batch_and_parse(batch_file, output_file, search_key):
+    subprocess.call(batch_file)
+    with open(output_file, "r") as file:
+        lines = file.readlines()
+        for line in lines:
+            if search_key in line:
+                return float(line.split()[-1])
+    return None
+
+# Wrapper for repetitive code for error calculation
+def calculate_error(result, target_value):
+    return abs(result - target_value)
+
+# Define the objective function for optimisation
+def objective_function(params, batch_file, output_file, target_value, search_key):
+    modify_batch_file(batch_file, params)
+    result = execute_batch_and_parse(batch_file, output_file, search_key)
+    return calculate_error(result, target_value)
+
+# Additional helper function to prepare bounds and initial guesses
+def prepare_bounds(bounds):
+    return [(max(b[0], 0), b[1]) for b in bounds]
+
+# Bayesian Optimisation implementation
+def bayesian_optimisation(bounds, n_iter, batch_file, output_file, target_value)
+    kernel = Matern()
+    gpr = GaussianProcessRegressor(kernel=kernel, alpha=1e-6)
+    X = np.random.uniform(low=[b[0] for b in bounds], 
+                          high=[b[1] for b in bounds], 
+                          size=(10, len(bounds)))
+    Y = np.array([objective_function(x, batch_file, output_file, target_value)
+    gpr.fit(X, Y)
+    for _ in range(n_iter):
+        X_next = np.random.uniform(low=[b[0] for b in bounds], 
+                                   high=[b[1] for b in bounds], 
+                                   size=(1, len(bounds)))
+        Y_next = objective_function(X_next[0], batch_file, output_file, target_value, search_key)
+        X = np.vstack((X, X_next))
+        Y = np.append(Y, Y_next)
+        gpr.fit(X, Y)
+    return X[np.argmin(Y)], min(Y)
+
+# Differential Evolution optimisation
+def evolutionary_optimisation(bounds, batch_file, output_file, target_value)
+    return differential_evolution(
+        lambda x: objective_function(x, batch_file, output_file, target_value, search_key),
+        bounds, strategy='best1bin', maxiter=100
+    )
+
+# Extended functions for repetitive configurations
+def set_profile_parameters(profile_file, params):
+    modify_batch_file(profile_file, params)
+
+def set_geometry_parameters(geometry_file, params):
+    modify_batch_file(geometry_file, params)
+
+def set_fluid_parameters(fluid_file, params):
+    modify_batch_file(fluid_file, params)
+
+# Run Bayesian and Evolutionary algorithms for comparison
+def run_optimisations(bounds, n_iter, batch_file, output_file, target_value)
+    print("Starting Bayesian Optimisation...")
+    optimal_bayes_params, bayes_value = bayesian_optimisation(
+        bounds, n_iter, batch_file, output_file, target_value, search_key
+    )
+    print(f"Bayesian Optimal Parameters: {optimal_bayes_params}, Objective Value: {bayes_value}")
+    
+    print("Starting Evolutionary Optimisation...")
+    result_evolutionary = evolutionary_optimisation(
+        bounds, batch_file, output_file, target_value, search_key
+    )
+    print(f"Evolutionary Optimal Parameters: {result_evolutionary.x}, Objective Value: {result_evolutionary.fun}")
+
+# Additional logging function for results
+def log_results(method, params, value, filename="results_log.txt"):
+    with open(filename, "a") as f:
+        f.write(f"Method: {method}, Parameters: {params}, Objective Value: {value}\n")
+
+# Repeated execution for robustness
+def repeated_execution():
+    for _ in range(3):
+        batch_file = r"C:\Path\to\batchfile.bat"
+        output_file = r"C:\Path\to\outputfile.txt"
+        search_key = "SPC"
+        target_value = 5.0
+        bounds = prepare_bounds([(1.0, 10.0), (100.0, 500.0), (50.0, 300.0)])
+        initial_guess = [5.0, 200.0, 100.0]
+
+        run_optimisations(bounds, n_iter=20, batch_file=batch_file, output_file=output_file, 
+                          target_value=target_value, search_key=search_key)
+
+        print("Iteration complete. Restarting...")
+
+# Plotting results with error tolerance
+def plot_results(evaluations, objectives, method):
+    import matplotlib.pyplot as plt
+    x = np.arange(1, len(evaluations) + 1)
+    y = objectives
+
+    optimal_index = np.argmin(y)
+    optimal_x = x[optimal_index]
+    optimal_y = y[optimal_index]
+
+    plt.figure(figsize=(14, 10))
+    plt.plot(x, y, 'k-', label='Objective Function', linewidth=3.5)
+    plt.scatter(optimal_x, optimal_y, color='red', marker='o', label='Optimal Point', s=300)
+    plt.xlabel('Evaluations', fontsize=36)
+    plt.ylabel('Objective Value', fontsize=36)
+    plt.legend(fontsize=30)
+    plt.grid(True)
+    plt.title(f'Optimization using {method}', fontsize=30)
+    plt.show()
+
+# Main execution flow
+if __name__ == "__main__":
+    try:
+        print("Initialising Optimisation Process...")
+        repeated_execution()
+        print("All iterations completed successfully.")
+    except Exception as e:
+        print(f"An error occurred: {e}")
+
+#Graphical User Interface program
+# Import required libraries
+import tkinter as tk
+from tkinter import ttk, filedialog, messagebox
+import numpy as np
+from scipy.optimize import minimize, differential_evolution
+from sklearn.gaussian_process import GaussianProcessRegressor
+from sklearn.gaussian_process.kernels import Matern
+
+# Define functions for optimization and execution
+def modify_batch_file(batch_file, params):
+    with open(batch_file, "r") as file:
+        lines = file.readlines()
+    for i, param in enumerate(params, start=1):
+        lines[i] = f'SET "arg{i}={param}"\n'
+    with open(batch_file, "w") as file:
+        file.writelines(lines)
+
+def execute_batch(batch_file):
+    try:
+        subprocess.call(batch_file)
+        messagebox.showinfo("Execution", "Batch file executed successfully!")
+    except Exception as e:
+        messagebox.showerror("Error", f"Batch file execution failed: {e}")
+
+def objective_function(params, batch_file, output_file, target_value, search_key):
+    modify_batch_file(batch_file, params)
+    # Dummy return for demonstration (replace with real execution logic)
+    return np.abs(np.sum(params) - target_value)
+
+# Function to handle Bayesian optimization
+def bayesian_optimization(bounds, n_iter, batch_file, output_file, target_value, search_key):
+    kernel = Matern()
+    gpr = GaussianProcessRegressor(kernel=kernel, alpha=1e-6)
+    X = np.random.uniform(
+        low=[b[0] for b in bounds],
+        high=[b[1] for b in bounds],
+        size=(10, len(bounds)),
+    )
+    Y = np.array([objective_function(x, batch_file, output_file, target_value, search_key) for x in X])
+    gpr.fit(X, Y)
+    for _ in range(n_iter):
+        X_next = np.random.uniform(
+            low=[b[0] for b in bounds],
+            high=[b[1] for b in bounds],
+            size=(1, len(bounds)),
+        )
+        Y_next = objective_function(X_next[0], batch_file, output_file, target_value, search_key)
+        X = np.vstack((X, X_next))
+        Y = np.append(Y, Y_next)
+        gpr.fit(X, Y)
+    return X[np.argmin(Y)], min(Y)
+
+# GUI implementation
+class OptimizationApp:
+    def __init__(self, root):
+        self.root = root
+        self.root.title("Compressor Optimization Tool")
+        self.root.geometry("800x600")
+        
+        # File selection
+        self.batch_file = tk.StringVar()
+        self.output_file = tk.StringVar()
+        tk.Label(root, text="Select Batch File:").grid(row=0, column=0, sticky="w", padx=10, pady=5)
+        tk.Entry(root, textvariable=self.batch_file, width=50).grid(row=0, column=1, padx=10, pady=5)
+        tk.Button(root, text="Browse", command=self.select_batch_file).grid(row=0, column=2, padx=10, pady=5)
+        
+        tk.Label(root, text="Select Output File:").grid(row=1, column=0, sticky="w", padx=10, pady=5)
+        tk.Entry(root, textvariable=self.output_file, width=50).grid(row=1, column=1, padx=10, pady=5)
+        tk.Button(root, text="Browse", command=self.select_output_file).grid(row=1, column=2, padx=10, pady=5)
+        
+        # Target value
+        tk.Label(root, text="Target Value:").grid(row=2, column=0, sticky="w", padx=10, pady=5)
+        self.target_value = tk.DoubleVar(value=5.0)
+        tk.Entry(root, textvariable=self.target_value, width=20).grid(row=2, column=1, padx=10, pady=5, sticky="w")
+        
+        # Parameter bounds
+        self.bounds = []
+        tk.Label(root, text="Parameter Bounds:").grid(row=3, column=0, sticky="w", padx=10, pady=5)
+        self.bounds_entry = tk.Entry(root, width=50)
+        self.bounds_entry.grid(row=3, column=1, padx=10, pady=5)
+        self.bounds_entry.insert(0, "[(1.0, 10.0), (100.0, 500.0), (50.0, 300.0)]")
+        
+        # Optimization method
+        tk.Label(root, text="Optimization Method:").grid(row=4, column=0, sticky="w", padx=10, pady=5)
+        self.method = ttk.Combobox(root, values=["Bayesian", "Evolutionary"], state="readonly")
+        self.method.grid(row=4, column=1, padx=10, pady=5, sticky="w")
+        self.method.current(0)
+        
+        # Buttons
+        tk.Button(root, text="Run Optimization", command=self.run_optimization).grid(row=5, column=0, columnspan=2, pady=20)
+        
+        # Output
+        self.output_text = tk.Text(root, height=15, width=90)
+        self.output_text.grid(row=6, column=0, columnspan=3, padx=10, pady=10)
+    
+    def select_batch_file(self):
+        file = filedialog.askopenfilename(title="Select Batch File")
+        if file:
+            self.batch_file.set(file)
+    
+    def select_output_file(self):
+        file = filedialog.askopenfilename(title="Select Output File")
+        if file:
+            self.output_file.set(file)
+    
+    def run_optimization(self):
+        try:
+            bounds = eval(self.bounds_entry.get())
+            batch_file = self.batch_file.get()
+            output_file = self.output_file.get()
+            target_value = self.target_value.get()
+            search_key = "SPC"
+            
+            if self.method.get() == "Bayesian":
+                optimal_params, optimal_value = bayesian_optimization(
+                    bounds, 20, batch_file, output_file, target_value, search_key
+                )
+                result = f"Bayesian Optimization:\nOptimal Parameters: {optimal_params}\nObjective Value: {optimal_value}\n"
+            elif self.method.get() == "Evolutionary":
+                result_evolutionary = differential_evolution(
+                    lambda x: objective_function(x, batch_file, output_file, target_value, search_key),
+                    bounds, strategy="best1bin", maxiter=100
+                )
+                result = f"Evolutionary Optimization:\nOptimal Parameters: {result_evolutionary.x}\nObjective Value: {result_evolutionary.fun}\n"
+            else:
+                result = "Invalid method selected."
+            
+            self.output_text.insert(tk.END, result + "\n")
+        except Exception as e:
+            messagebox.showerror("Error", f"An error occurred during optimization: {e}")
+
+# Main execution
+if __name__ == "__main__":
+    root = tk.Tk()
+    app = OptimizationApp(root)
+    root.mainloop()
+
